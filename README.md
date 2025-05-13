@@ -1,21 +1,22 @@
-# TPSpring2025
+# TPSpring2025 - пункты 3 и 4.
 
-## ДЗ 4. Работа API
 
 В данном репозитории представлено решение для пунктов 3 и 4 ДЗ 4.
 
 ### 3 пункт: Документирование API с помощью Swagger
-
-- **Game Reviews API**: [Swagger.yaml](Game%20Reviews%20API%20Swagger.yaml)
-- **Wishlist API**: [Swagger.yaml](Wishlist%20API%20Swagger.yaml)
+(Кулинич Дмитрий)
+- **Game Reviews API**: [Game Reviews API Swagger.yaml](Game%20Reviews%20API%20Swagger.yaml)
+- **Wishlist API**: [Wishlist API Swagger.yaml](Wishlist%20API%20Swagger.yaml)
 
 ### 4 пункт: Новый API для хранения и обработки новых данных в Swagger-формате
+(Беликов Константин)
 
-- **Steam Highlight Clipper API**: [steam-highlight-clipper-api.yaml](steam-highlight-clipper-api.yaml)
+- **Steam Highlight Clipper API**: [Steam Highlight Clipper API.yaml](steam-highlight-clipper-api.yaml)
 
 
-#**Условие ДЗ 4:**
-# ДЗ 4. Работа API
+
+
+# Условие ДЗ 4. Работа API
 
 ## Цель задания
 - Изучить и понять, как работает API веб-сайта Steam.
