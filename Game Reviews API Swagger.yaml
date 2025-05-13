@@ -1,0 +1,179 @@
+openapi: 3.0.0
+info:
+  title: Game Reviews API
+  description: |
+    API для работы с отзывами об играх. Позволяет получать, создавать и удалять отзывы. Требует аутентификации для изменений.
+    Потенциальные проблемы и улучшения:
+    - Проблема: Удаление реализовано через POST, а не DELETE.
+      - Улучшение: Использовать DELETE `/reviews/{reviewId}`.
+    - Проблема: Отсутствует пагинация для загрузки отзывов.
+      - Улучшение: Добавить параметры `?page=1&limit=10` для GET `/games/{gameId}/reviews`.
+    - Проблема: Нет эндпоинта для обновления отзывов.
+      - Улучшение: Добавить PUT `/reviews/{reviewId}`.
+    - Проблема: Неясность механизма аутентификации (cookies или tokens).
+      - Улучшение: Документировать и унифицировать аутентификацию.
+    - Улучшение: Стандартизировать формат ошибок.
+  version: 1.0.0
+servers:
+  - url: https://api.steampowered.com/<интерфейс>/<метод>/v<версия>/
+paths:
+  /games/{gameId}/reviews:
+    get:
+      summary: Получение отзывов об игре
+      description: Возвращает список отзывов для указанной игры.
+      parameters:
+        - in: path
+          name: gameId
+          required: true
+          schema:
+            type: string
+          description: Идентификатор игры
+      responses:
+        '200':
+          description: Список отзывов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+        '404':
+          description: Игра не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Создание нового отзыва
+      description: Создает новый отзыв для указанной игры. Требуется аутентификация.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: gameId
+          required: true
+          schema:
+            type: string
+          description: Идентификатор игры
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                  description: Текст отзыва
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                  description: Оценка отзыва (1–5)
+              required:
+                - text
+                - rating
+      responses:
+        '201':
+          description: Отзыв создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '400':
+          description: Неверный ввод
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Игра не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /reviews/{reviewId}/delete:
+    post:
+      summary: Удаление отзыва
+      description: Удаляет указанный отзыв. Требуется аутентификация и владение отзывом.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: reviewId
+          required: true
+          schema:
+            type: string
+          description: Идентификатор отзыва
+      responses:
+        '200':
+          description: Отзыв успешно удалён
+        '401':
+          description: Пользователь не аутентифицирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Доступ запрещён (не является автором)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Отзыв не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Review:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Уникальный идентификатор отзыва
+        gameId:
+          type: string
+          description: Идентификатор игры
+        userId:
+          type: string
+          description: Идентификатор пользователя
+        text:
+          type: string
+          description: Текст отзыва
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Оценка отзыва (1–5)
+        createdAt:
+          type: string
+          format: date-time
+          description: Время создания отзыва
+        updatedAt:
+          type: string
+          format: date-time
+          description: Время последнего обновления отзыва
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Код ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    

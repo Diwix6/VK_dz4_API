@@ -1,0 +1,220 @@
+openapi: 3.0.0
+info:
+  title: Wishlist API
+  description: |
+    API для управления списком желаемых игр на игровой платформе.
+
+    Потенциальные проблемы и улучшения:
+    - Проблема: Использование POST для удаления и обновления вместо DELETE и PUT/PATCH.
+      - Улучшение: Перейти на DELETE `/wishlist/{gameId}` и PUT `/wishlist/{gameId}`.
+    - Проблема: Передача `access_token` в теле запроса.
+      - Улучшение: Использовать заголовок `Authorization` или `X-CSRF-Token`.
+    - Проблема: Отсутствие пагинации для GET `/wishlist`.
+      - Улучшение: Добавить параметры `?page=1&limit=10`.
+    - Проблема: Нет фильтрации и сортировки.
+      - Улучшение: Включить параметры `?sort=priority&order=desc`.
+    - Улучшение Внедрить версионность API (например, `/v1/wishlist`).
+    - Улучшение Стандартизировать формат ошибок и добавить rate limiting.
+  version: 1.0.0
+servers:
+  - url: https://store.steampowered.com/<интерфейс>/<метод>/v<версия>
+paths:
+  /wishlist:
+    get:
+      summary: Получение списка желаемых
+      description: Возвращает список игр в списке желаемых текущего пользователя.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Список игр
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WishlistItem'
+        '401':
+          description: Неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /wishlist/add:
+    post:
+      summary: Добавление игры в список желаемых
+      description: Добавляет указанную игру в список desired пользователя.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                gameId:
+                  type: string
+                  description: Идентификатор игры
+                access_token:
+                  type: string
+                  description: Токен доступа (возможно, CSRF-токен)
+                priority:
+                  type: integer
+                  description: Приоритет игры (опционально)
+              required:
+                - gameId
+                - access_token
+      responses:
+        '201':
+          description: Игра добавлена
+        '400':
+          description: Неверный ввод
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Игра не найдена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /wishlist/remove:
+    post:
+      summary: Удаление игры из списка желаемых
+      description: Удаляет указанную игру из списка желаемых.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                gameId:
+                  type: string
+                  description: Идентификатор игры
+                access_token:
+                  type: string
+                  description: Токен доступа (возможно, CSRF-токен)
+              required:
+                - gameId
+                - access_token
+      responses:
+        '200':
+          description: Игра удалена
+        '400':
+          description: Неверный ввод
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Игра не найдена в списке
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /wishlist/update:
+    post:
+      summary: Обновление приоритета игры
+      description: Обновляет приоритет указанной игры в списке желаемых.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                gameId:
+                  type: string
+                  description: Идентификатор игры
+                access_token:
+                  type: string
+                  description: Токен доступа (возможно, CSRF-токен)
+                priority:
+                  type: integer
+                  description: Новый приоритет игры
+              required:
+                - gameId
+                - access_token
+                - priority
+      responses:
+        '200':
+          description: Приоритет обновлен
+        '400':
+          description: Неверный ввод
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Игра не найдена в списке
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+  schemas:
+    WishlistItem:
+      type: object
+      properties:
+        gameId:
+          type: string
+          description: Идентификатор игры
+        title:
+          type: string
+          description: Название игры
+        releaseDate:
+          type: string
+          format: date-time
+          description: Дата выпуска игры
+        price:
+          type: number
+          description: Цена игры
+        imageUrl:
+          type: string
+          description: URL изображения игры
+        addedAt:
+          type: string
+          format: date-time
+          description: Время добавления в список
+        priority:
+          type: integer
+          description: Приоритет игры
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: Код ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
