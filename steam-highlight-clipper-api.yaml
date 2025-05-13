@@ -1,0 +1,214 @@
+openapi: 3.0.4
+info:
+  title: Steam Highlight Clipper API
+  version: 1.0.0
+  description: |
+    API для создания, получения и управления видеоклипами лучших игровых моментов,
+    созданных системой Steam Highlight Clipper.
+
+servers:
+  - url: https://api.steamplatform.com/highlight-clips
+
+paths:
+  /clips:
+    post:
+      summary: Загрузить новый клип
+      description: Принимает видеоклип, сгенерированный системой, и сохраняет его.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClipInput'
+      responses:
+        '201':
+          description: Клип успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Clip'
+        '400':
+          description: Неверный формат данных
+        '500':
+          description: Внутренняя ошибка сервера
+
+  /clips/{clipId}:
+    get:
+      summary: Получить информацию о клипе
+      parameters:
+        - name: clipId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация о клипе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Clip'
+        '404':
+          description: Клип не найден
+        '500':
+          description: Внутренняя ошибка сервера
+
+  /clips/user/{userId}:
+    get:
+      summary: Получить список клипов пользователя
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Список клипов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Clip'
+              example:
+                - id: "clip_abc123"
+                  userId: "user_steam_789"
+                  gameId: "game_csgo_001"
+                  title: "Эпичный хэдшот"
+                  createdAt: "2025-05-10T14:22:45Z"
+                  duration: 14
+                  videoUrl: "https://cdn.steamcontent.com/clips/clip_abc123.mp4"
+                  events:
+                    - timestamp: "2025-05-10T14:22:30Z"
+                      type: "kill"
+                      metadata:
+                        weapon: "AWP"
+                        headshot: true
+                        enemyName: "bot_Danny"
+        '404':
+          description: Пользователь не найден или у него нет клипов
+        '500':
+          description: Внутренняя ошибка сервера
+
+components:
+  schemas:
+    Clip:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "clip_abc123"
+        userId:
+          type: string
+          example: "user_steam_789"
+        gameId:
+          type: string
+          example: "game_csgo_001"
+        title:
+          type: string
+          example: "Эпичный хэдшот в финале раунда"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-05-10T14:22:45Z"
+        duration:
+          type: integer
+          description: Продолжительность клипа в секундах
+          example: 14
+        videoUrl:
+          type: string
+          format: uri
+          example: "https://cdn.steamcontent.com/clips/clip_abc123.mp4"
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/SessionEvent'
+      example:
+        id: "clip_abc123"
+        userId: "user_steam_789"
+        gameId: "game_csgo_001"
+        title: "Эпичный хэдшот в финале раунда"
+        createdAt: "2025-05-10T14:22:45Z"
+        duration: 14
+        videoUrl: "https://cdn.steamcontent.com/clips/clip_abc123.mp4"
+        events:
+          - timestamp: "2025-05-10T14:22:30Z"
+            type: "kill"
+            metadata:
+              weapon: "AWP"
+              headshot: true
+              enemyName: "bot_Danny"
+
+    ClipInput:
+      type: object
+      required:
+        - userId
+        - gameId
+        - videoUrl
+        - duration
+        - events
+      properties:
+        userId:
+          type: string
+          example: "user_steam_789"
+        gameId:
+          type: string
+          example: "game_csgo_001"
+        videoUrl:
+          type: string
+          format: uri
+          example: "https://cdn.steamcontent.com/temp/upload_xyz.mp4"
+        duration:
+          type: integer
+          example: 14
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/SessionEvent'
+      example:
+        userId: "user_steam_789"
+        gameId: "game_csgo_001"
+        videoUrl: "https://cdn.steamcontent.com/temp/upload_xyz.mp4"
+        duration: 14
+        events:
+          - timestamp: "2025-05-10T14:22:30Z"
+            type: "kill"
+            metadata:
+              weapon: "AK-47"
+              headshot: true
+              enemyName: "bot_Jim"
+          - timestamp: "2025-05-10T14:22:38Z"
+            type: "victory"
+            metadata:
+              matchType: "ranked"
+              score: "16-14"
+
+    SessionEvent:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-05-10T14:22:30Z"
+        type:
+          type: string
+          enum: [kill, death, achievement, victory, item_pickup]
+          example: "kill"
+        metadata:
+          type: object
+          description: Дополнительные данные события
+          example:
+            weapon: "AK-47"
+            headshot: true
+            enemyName: "bot_Jim"
